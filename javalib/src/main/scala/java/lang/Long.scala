@@ -190,6 +190,17 @@ object Long {
   private def fail(s: String): Nothing =
     throw new NumberFormatException(s"""For input string: "$s"""")
 
+  @inline private def parseDecimalDigit(s: String, offset: Int): Int = {
+    val ch = s.charAt(offset)
+    val digit = ch - '0'
+    if (digit >= 0 && digit <= 9) digit
+    else {
+      val unicodeDigit = Character.digit(ch, 10)
+      if (unicodeDigit == -1) fail(s)
+      unicodeDigit
+    }
+  }
+
   def decode(nm: String): Long = {
     if (nm == null)
       throw new NumberFormatException("null")
@@ -336,26 +347,13 @@ object Long {
     // (999_999_999_999_999_999 < 9_223_372_036_854_775_807)
     val safeEnd = Math.min(length, offset + 18)
     while (offset < safeEnd) {
-      val d = s.charAt(offset) - '0'
-      if (d < 0 || d > 9) {
-        val ud = Character.digit(s.charAt(offset), 10)
-        if (ud == -1) fail(s)
-        result = result * 10 - ud
-        offset += 1
-      } else {
-        result = result * 10 - d
-        offset += 1
-      }
+      result = result * 10 - parseDecimalDigit(s, offset)
+      offset += 1
     }
 
     // Phase 2: remaining digits — overflow check required
     while (offset < length) {
-      val d = s.charAt(offset) - '0'
-      val digit = if (d < 0 || d > 9) {
-        val ud = Character.digit(s.charAt(offset), 10)
-        if (ud == -1) fail(s)
-        ud
-      } else d
+      val digit = parseDecimalDigit(s, offset)
       offset += 1
       if (-922337203685477580L > result) fail(s)
       val next = result * 10 - digit
@@ -597,30 +595,18 @@ object Long {
     // (999_999_999_999_999_999 fits in signed Long)
     val safeEnd = Math.min(length, offset + 18)
     while (offset < safeEnd) {
-      val d = s.charAt(offset) - '0'
-      if (d < 0 || d > 9) {
-        val ud = Character.digit(s.charAt(offset), 10)
-        if (ud == -1) fail(s)
-        result = result * 10 + ud
-        offset += 1
-      } else {
-        result = result * 10 + d
-        offset += 1
-      }
+      result = result * 10 + parseDecimalDigit(s, offset)
+      offset += 1
     }
 
     // Phase 2: 19th-20th digits — unsigned overflow check required
     while (offset < length) {
-      val d = s.charAt(offset) - '0'
-      val digit = if (d < 0 || d > 9) {
-        val ud = Character.digit(s.charAt(offset), 10)
-        if (ud == -1) fail(s)
-        ud
-      } else d
+      val digit = parseDecimalDigit(s, offset)
       offset += 1
       if (compareUnsigned(result, 1844674407370955161L) > 0) fail(s)
+      val previous = result
       result = result * 10 + digit
-      if (compareUnsigned(digit, result) > 0)
+      if (compareUnsigned(result, previous) < 0)
         throw new NumberFormatException(
           s"""String value $s exceeds range of unsigned long."""
         )
