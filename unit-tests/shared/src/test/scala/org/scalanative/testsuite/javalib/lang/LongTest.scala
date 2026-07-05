@@ -204,6 +204,7 @@ class LongTest {
     assertEquals(4L, parse("100", 2))
     assertEquals(unsignedMaxValue, parse(unsignedMaxValueText))
     assertEquals(unsignedMaxValue, parse(unsignedMaxValueArabicIndicText))
+    assertEquals(-6L, parse("18446744073709551610"))
     assertEquals(123L, parse("\u0661\u0662\u0663"))
     assertEquals(123L, parse("1\u06623"))
 

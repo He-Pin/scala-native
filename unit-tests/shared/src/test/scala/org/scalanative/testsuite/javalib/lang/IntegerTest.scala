@@ -201,6 +201,7 @@ class IntegerTest {
     assertEquals(4, parse("100", 2))
     assertEquals(unsignedMaxValue, parse(unsignedMaxValueText))
     assertEquals(unsignedMaxValue, parse(unsignedMaxValueArabicIndicText))
+    assertEquals(-6, parse("4294967290"))
     assertEquals(123, parse("\u0661\u0662\u0663"))
     assertEquals(123, parse("1\u06623"))
 
