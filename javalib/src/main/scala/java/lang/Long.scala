@@ -176,6 +176,8 @@ object Long {
   final val SIZE = 64
   final val BYTES = 8
 
+  import DecimalParseHelpers.parseDecimalDigit
+
   @inline def bitCount(l: scala.Long): scala.Int =
     LLVMIntrinsics.`llvm.ctpop.i64`(l).toInt
 
@@ -196,17 +198,6 @@ object Long {
   private final val UnsignedMaxValueQuotient = 1844674407370955161L
   private final val UnsignedMaxValueLastDigit = 5
 
-  @inline private def parseDecimalDigit(s: String, offset: Int): Int = {
-    val ch = s.charAt(offset)
-    val digit = ch - '0'
-    if (digit >= 0 && digit <= 9) digit
-    else {
-      val unicodeDigit = Character.digit(ch, 10)
-      if (unicodeDigit == -1) fail(s)
-      unicodeDigit
-    }
-  }
-
   def decode(nm: String): Long = {
     if (nm == null)
       throw new NumberFormatException("null")
@@ -215,10 +206,10 @@ object Long {
 
     var i = 0
     var firstDigit = nm.charAt(i)
-    val negative = firstDigit == '-'
-    val positive = firstDigit == '+'
+    val hasNegativeSign = firstDigit == '-'
+    val hasPlusSign = firstDigit == '+'
 
-    if (negative || positive) {
+    if (hasNegativeSign || hasPlusSign) {
       if (length == 1) fail(nm)
       i += 1
       firstDigit = nm.charAt(i)
@@ -245,7 +236,7 @@ object Long {
       base = 16
     }
 
-    valueOf(parse(nm, i, base, negative))
+    valueOf(parse(nm, i, base, hasNegativeSign))
   }
 
   @inline
@@ -311,14 +302,14 @@ object Long {
     if (length == 0) fail(s)
 
     val first = s.charAt(0)
-    val negative = first == '-'
+    val hasNegativeSign = first == '-'
     val hasPlusSign = first == '+'
 
-    if ((negative || hasPlusSign) && length == 1) fail(s)
+    if ((hasNegativeSign || hasPlusSign) && length == 1) fail(s)
 
-    val offset = if (negative || hasPlusSign) 1 else 0
+    val offset = if (hasNegativeSign || hasPlusSign) 1 else 0
 
-    parseDecimal(s, offset, negative)
+    parseDecimal(s, offset, hasNegativeSign)
   }
 
   @inline def parseLong(s: String, radix: Int): scala.Long = {
@@ -339,14 +330,14 @@ object Long {
       if (length == 0) fail(s)
 
       val first = s.charAt(0)
-      val negative = first == '-'
+      val hasNegativeSign = first == '-'
       val hasPlusSign = first == '+'
 
-      if ((negative || hasPlusSign) && length == 1) fail(s)
+      if ((hasNegativeSign || hasPlusSign) && length == 1) fail(s)
 
-      val offset = if (negative || hasPlusSign) 1 else 0
+      val offset = if (hasNegativeSign || hasPlusSign) 1 else 0
 
-      parseGeneric(s, offset, radix, negative)
+      parseGeneric(s, offset, radix, hasNegativeSign)
     }
   }
 
@@ -584,9 +575,9 @@ object Long {
 
     val first = s.charAt(0)
     val hasPlusSign = first == '+'
-    val hasMinusSign = first == '-'
-    if ((hasPlusSign || hasMinusSign) && len == 1) fail(s)
-    if (hasMinusSign)
+    val hasNegativeSign = first == '-'
+    if ((hasPlusSign || hasNegativeSign) && len == 1) fail(s)
+    if (hasNegativeSign)
       throw new NumberFormatException(
         s"""Illegal leading minus sign on unsigned string $s."""
       )
@@ -615,9 +606,9 @@ object Long {
 
       val first = s.charAt(0)
       val hasPlusSign = first == '+'
-      val hasMinusSign = first == '-'
-      if ((hasPlusSign || hasMinusSign) && len == 1) fail(s)
-      if (hasMinusSign)
+      val hasNegativeSign = first == '-'
+      if ((hasPlusSign || hasNegativeSign) && len == 1) fail(s)
+      if (hasNegativeSign)
         throw new NumberFormatException(
           s"""Illegal leading minus sign on unsigned string $s."""
         )
